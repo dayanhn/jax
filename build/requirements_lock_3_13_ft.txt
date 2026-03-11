@@ -4,7 +4,7 @@
 #
 #    bazel run //build:requirements_ft.update
 #
---index-url https://us-python.pkg.dev/ml-oss-artifacts-published/pypi-mirror/simple
+--index-url https://pypi.tuna.tsinghua.edu.cn/simple
 
 absl-py==2.3.1 \
     --hash=sha256:a97820526f7fbfd2ec1bce83f3f25e3a14840dac0d8e02a0b71cd75db3f77fc9 \
