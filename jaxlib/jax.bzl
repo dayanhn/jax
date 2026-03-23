@@ -44,6 +44,13 @@ flatbuffer_cc_library = _flatbuffer_cc_library
 tf_exec_properties = _tf_exec_properties
 tf_cuda_tests_tags = _tf_cuda_tests_tags
 
+# Ascend helper functions
+def if_ascend_is_configured(x):
+  """Returns `x` if Ascend is configured, otherwise returns an empty list."""
+  return select({
+      "//conditions:default": [],
+  })
+
 jax_internal_packages = []
 jax_extend_internal_users = []
 experimental_transfer_users = []
@@ -466,6 +473,11 @@ def _jax_wheel_impl(ctx):
         if ctx.attr.platform_version == "":
             fail("platform_version must be set to a valid rocm version for rocm wheels")
         args.add("--platform_version", ctx.attr.platform_version)  # required for gpu wheels
+    if ctx.attr.enable_ascend:
+        args.add("--enable-ascend", "True")
+        if ctx.attr.platform_version == "":
+            fail("platform_version must be set to a valid ascend version for ascend wheels")
+        args.add("--platform_version", ctx.attr.platform_version)  # required for ascend wheels
     if ctx.attr.skip_gpu_kernels:
         args.add("--skip_gpu_kernels")
 
@@ -507,10 +519,11 @@ _jax_wheel = rule(
         "source_files": attr.label_list(allow_files = True),
         "output_path": attr.label(default = Label("//jaxlib/tools:output_path")),
         "enable_cuda": attr.bool(default = False),
-        # A cuda/rocm version is required for gpu wheels; for cpu wheels, it can be an empty string.
+        # A cuda/rocm/ascend version is required for gpu/ascend wheels; for cpu wheels, it can be an empty string.
         "platform_version": attr.string(),
         "skip_gpu_kernels": attr.bool(default = False),
         "enable_rocm": attr.bool(default = False),
+        "enable_ascend": attr.bool(default = False),
         "include_cuda_libs": attr.label(default = Label("@local_config_cuda//cuda:include_cuda_libs")),
         "override_include_cuda_libs": attr.label(default = Label("@local_config_cuda//cuda:override_include_cuda_libs")),
         "py_freethreaded": attr.label(default = Label("@rules_python//python/config_settings:py_freethreaded")),
@@ -528,6 +541,7 @@ def jax_wheel(
         editable = False,
         enable_cuda = False,
         enable_rocm = False,
+        enable_ascend = False,
         platform_version = "",
         source_files = []):
     """Create jax artifact wheels.
@@ -543,7 +557,8 @@ def jax_wheel(
       platform_independent: whether to build a wheel without platform tag
       enable_cuda: whether to build a cuda wheel
       enable_rocm: whether to build a rocm wheel
-      platform_version: the cuda version to use for the wheel
+      enable_ascend: whether to build an ascend wheel
+      platform_version: the cuda/rocm/ascend version to use for the wheel
       source_files: the source files to include in the wheel
 
     Returns:
@@ -560,6 +575,7 @@ def jax_wheel(
         editable = editable,
         enable_cuda = enable_cuda,
         enable_rocm = enable_rocm,
+        enable_ascend = enable_ascend,
         platform_version = platform_version,
         # git_hash is empty by default. Use `--//jaxlib/tools:jaxlib_git_hash=$(git rev-parse HEAD)`
         # flag in bazel command to pass the git hash for nightly or release builds.

@@ -2,10 +2,12 @@
 *.so
 *.egg-info
 *.whl
+/xla/
 /build/lib
 /build/bazel*
 /build/__editable__.jax-*
 /dist/
+.trae/
 .ipynb_checkpoints
 /bazel-*
 MODULE.bazel.lock

@@ -33,6 +33,7 @@ load(
     "PLATFORM_TAGS_DICT",
     "compare_srcs_and_test_deps_test",
     "get_test_suite_list",
+    "if_ascend_is_configured",
     "if_pypi_cuda_wheel_deps",
     "jax_py_test",
     "jax_wheel",
@@ -208,6 +209,19 @@ py_binary(
     ],
 )
 
+py_binary(
+    name = "build_ascend_plugin_wheel_tool",
+    srcs = ["build_ascend_plugin_wheel.py"],
+    main = "build_ascend_plugin_wheel.py",
+    deps = [
+        ":build_utils",
+        "@bazel_tools//tools/python/runfiles",
+        "@pypi//build",
+        "@pypi//setuptools",
+        "@pypi//wheel",
+    ],
+)
+
 wheel_sources(
     name = "jax_plugin_sources",
     data_srcs = [
@@ -219,12 +233,17 @@ wheel_sources(
     ]) + if_rocm([
         "//jaxlib/rocm:rocm_gpu_support",
         "//jaxlib/rocm:rocm_plugin_extension",
+    ]) + if_ascend_is_configured([
+        "//jaxlib/ascend:ascend_gpu_support",
+        "//jaxlib/ascend:ascend_plugin_extension",
     ]),
     py_srcs = [":version"] + if_cuda([
         "//jaxlib/cuda:cuda_gpu_support",
         "//jaxlib/mosaic/gpu:mosaic_gpu",
     ]) + if_rocm([
         "//jaxlib/rocm:rocm_gpu_support",
+    ]) + if_ascend_is_configured([
+        "//jaxlib/ascend:ascend_gpu_support",
     ]),
     static_srcs = [
         "LICENSE.txt",
@@ -234,6 +253,9 @@ wheel_sources(
     ]) + if_rocm([
         "//jax_plugins/rocm:plugin_pyproject.toml",
         "//jax_plugins/rocm:plugin_setup.py",
+    ]) + if_ascend_is_configured([
+        "//jax_plugins/ascend:plugin_pyproject.toml",
+        "//jax_plugins/ascend:plugin_setup.py",
     ]),
 )
 
@@ -325,6 +347,9 @@ wheel_sources(
     ]) + if_rocm([
         "//jax_plugins/rocm:rocm_plugin",
         "//jaxlib/rocm:rocm_gpu_support",
+    ]) + if_ascend_is_configured([
+        "//jax_plugins/ascend:ascend_plugin",
+        "//jaxlib/ascend:ascend_gpu_support",
     ]),
     py_srcs = [
         ":version",
@@ -332,6 +357,8 @@ wheel_sources(
         "//jaxlib/cuda:cuda_gpu_support",
     ]) + if_rocm([
         "//jaxlib/rocm:rocm_gpu_support",
+    ]) + if_ascend_is_configured([
+        "//jaxlib/ascend:ascend_gpu_support",
     ]),
     static_srcs = [
         "LICENSE.txt",
@@ -343,6 +370,10 @@ wheel_sources(
         "//jax_plugins/rocm:pyproject.toml",
         "//jax_plugins/rocm:setup.py",
         "//jax_plugins/rocm:__init__.py",
+    ]) + if_ascend_is_configured([
+        "//jax_plugins/ascend:pyproject.toml",
+        "//jax_plugins/ascend:setup.py",
+        "//jax_plugins/ascend:__init__.py",
     ]),
 )
 
@@ -408,6 +439,48 @@ jax_wheel(
     source_files = [":jax_pjrt_sources"],
     wheel_binary = ":build_gpu_plugin_wheel_tool",
     wheel_name = "jax_rocm60_pjrt",
+)
+
+# Ascend plugin wheel targets
+jax_wheel(
+    name = "jax_ascend_plugin_wheel",
+    enable_ascend = True,
+    no_abi = False,
+    platform_version = "910",
+    source_files = [":jax_plugin_sources"],
+    wheel_binary = ":build_ascend_plugin_wheel_tool",
+    wheel_name = "jax_ascend910_plugin",
+)
+
+jax_wheel(
+    name = "jax_ascend_plugin_wheel_editable",
+    editable = True,
+    enable_ascend = True,
+    platform_version = "910",
+    source_files = [":jax_plugin_sources"],
+    wheel_binary = ":build_ascend_plugin_wheel_tool",
+    wheel_name = "jax_ascend910_plugin",
+)
+
+# Ascend PJRT wheel targets
+jax_wheel(
+    name = "jax_ascend_pjrt_wheel",
+    enable_ascend = True,
+    no_abi = True,
+    platform_version = "910",
+    source_files = [":jax_pjrt_sources"],
+    wheel_binary = ":build_ascend_plugin_wheel_tool",
+    wheel_name = "jax_ascend910_pjrt",
+)
+
+jax_wheel(
+    name = "jax_ascend_pjrt_wheel_editable",
+    editable = True,
+    enable_ascend = True,
+    platform_version = "910",
+    source_files = [":jax_pjrt_sources"],
+    wheel_binary = ":build_ascend_plugin_wheel_tool",
+    wheel_name = "jax_ascend910_pjrt",
 )
 
 # Py_import targets.

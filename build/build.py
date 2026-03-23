@@ -67,6 +67,10 @@ WHEEL_BUILD_TARGET_DICT = {
     "jax-cuda-pjrt_editable": "//jaxlib/tools:jax_cuda{cuda_major_version}_pjrt_wheel_editable",
     "jax-rocm-plugin": "//jaxlib/tools:jax_rocm_plugin_wheel",
     "jax-rocm-pjrt": "//jaxlib/tools:jax_rocm_pjrt_wheel",
+    "jax-ascend-plugin": "//jaxlib/tools:jax_ascend_plugin_wheel",
+    "jax-ascend-plugin_editable": "//jaxlib/tools:jax_ascend_plugin_wheel_editable",
+    "jax-ascend-pjrt": "//jaxlib/tools:jax_ascend_pjrt_wheel",
+    "jax-ascend-pjrt_editable": "//jaxlib/tools:jax_ascend_pjrt_wheel_editable",
     "mosaic-gpu-cuda": "//jaxlib/tools:mosaic_gpu_wheel_cuda{cuda_major_version}",
 }
 
@@ -149,7 +153,8 @@ def add_artifact_subcommand_arguments(parser: argparse.ArgumentParser):
         A comma separated list of JAX wheels to build. E.g: --wheels="jaxlib",
         --wheels="jaxlib,jax-cuda-plugin", etc.
         Valid options are: jaxlib, jax-cuda-plugin or cuda-plugin, jax-cuda-pjrt or cuda-pjrt,
-        jax-rocm-plugin or rocm-plugin, jax-rocm-pjrt or rocm-pjrt
+        jax-rocm-plugin or rocm-plugin, jax-rocm-pjrt or rocm-pjrt,
+        jax-ascend-plugin or ascend-plugin, jax-ascend-pjrt or ascend-pjrt
         """,
   )
 
@@ -276,6 +281,22 @@ def add_artifact_subcommand_arguments(parser: argparse.ArgumentParser):
       type=str,
       default="",
       help="Path to the ROCm toolkit.",
+  )
+
+  # Ascend Options
+  ascend_group = parser.add_argument_group('Ascend Options')
+  ascend_group.add_argument(
+      "--ascend_version",
+      type=str,
+      default="910",
+      help="Ascend version to use",
+  )
+
+  ascend_group.add_argument(
+      "--ascend_path",
+      type=str,
+      default="",
+      help="Path to the Ascend toolkit.",
   )
 
   # Compile Options
@@ -496,6 +517,7 @@ async def main():
           "Incorrect wheel name %s provided, valid choices are jaxlib,"
           " jax-cuda-plugin or cuda-plugin, jax-cuda-pjrt or cuda-pjrt,"
           " jax-rocm-plugin or rocm-plugin, jax-rocm-pjrt or rocm-pjrt,"
+          " jax-ascend-plugin or ascend-plugin, jax-ascend-pjrt or ascend-pjrt,"
           " or mosaic-gpu",
           wheel,
       )
@@ -651,6 +673,19 @@ async def main():
           f"--action_env=TF_ROCM_AMDGPU_TARGETS={args.rocm_amdgpu_targets}"
       )
 
+  if "ascend" in args.wheels:
+    wheel_build_command_base.append("--config=ascend")
+    if clang_local:
+      wheel_build_command_base.append(f"--action_env=CLANG_COMPILER_PATH=\"{clang_path}\"")
+    if args.ascend_path:
+      logging.debug("Ascend toolkit path: %s", args.ascend_path)
+      wheel_build_command_base.append(f"--action_env=ASCEND_PATH=\"{args.ascend_path}\"")
+      wheel_build_command_base.append(f"--action_env=ASCEND_TOOLKIT_HOME=\"{args.ascend_path}\"")
+    else:
+      # Use ASCEND_TOOLKIT_HOME from environment if not specified
+      if "ASCEND_TOOLKIT_HOME" in os.environ:
+        wheel_build_command_base.append(f"--action_env=ASCEND_TOOLKIT_HOME=\"{os.environ['ASCEND_TOOLKIT_HOME']}\"")
+
   # Append additional build options at the end to override any options set in
   # .bazelrc or above.
   if args.bazel_options:
@@ -689,7 +724,7 @@ async def main():
       output_path = args.output_path
       logger.debug("Artifacts output directory: %s", output_path)
 
-      # Allow CUDA/ROCm wheels without the "jax-" prefix.
+      # Allow CUDA/ROCm/Ascend wheels without the "jax-" prefix.
       if ("plugin" in wheel or "pjrt" in wheel) and "jax" not in wheel:
         wheel = "jax-" + wheel
 
@@ -747,6 +782,13 @@ async def main():
       else:
         # For non-editable builds, use wildcard pattern to match any ROCm version in glob patterns
         wheel_dir = wheel.replace("rocm", "rocm*").replace("-", "_")
+    elif "ascend" in wheel:
+      if args.editable:
+        # For editable builds, use the actual Ascend version since directory paths cannot contain wildcards
+        wheel_dir = wheel.replace("ascend", f"ascend{args.ascend_version}").replace("-", "_")
+      else:
+        # For non-editable builds, use wildcard pattern to match any Ascend version in glob patterns
+        wheel_dir = wheel.replace("ascend", "ascend*").replace("-", "_")
     else:
       wheel_dir = wheel
 
@@ -764,7 +806,7 @@ async def main():
           wheel_version_suffix += (
               f"+{wheel_git_hash}{custom_wheel_version_suffix}"
           )
-      if wheel in ["jax", "jax-cuda-pjrt", "jax-rocm-pjrt"]:
+      if wheel in ["jax", "jax-cuda-pjrt", "jax-rocm-pjrt", "jax-ascend-pjrt"]:
         python_tag = "py"
       else:
         python_tag = "cp"

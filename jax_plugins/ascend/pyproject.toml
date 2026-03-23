@@ -1,0 +1,22 @@
+[build-system]
+requires = ["setuptools>=42", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "jax-ascend-plugin"
+version = "0.0.1"
+description = "JAX Ascend plugin"
+readme = "README.md"
+license = { file = "LICENSE.txt" }
+authors = [
+    { name = "JAX Team", email = "jax-dev@google.com" }
+]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: Apache Software License",
+    "Operating System :: Linux",
+]
+
+[project.dependencies]
+jax = "*"
+jaxlib = "*"

@@ -192,3 +192,13 @@ def update_setup_with_rocm_version(file_dir: pathlib.Path, rocm_version: str):
   )
   with open(src_file, "w") as f:
     f.write(content)
+
+def update_setup_with_ascend_version(file_dir: pathlib.Path, ascend_version: str):
+  src_file = file_dir / "setup.py"
+  with open(src_file) as f:
+    content = f.read()
+  content = content.replace(
+      "ascend_version = 0  # placeholder", f"ascend_version = {ascend_version}"
+  )
+  with open(src_file, "w") as f:
+    f.write(content)
