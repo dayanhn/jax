@@ -562,7 +562,7 @@ try-import %workspace%/.bazelrc.user
 
 # Configs for Ascend
 common:ascend --repo_env TF_NEED_ASCEND=1
-common:ascend --action_env ASCEND_TOOLKIT_HOME="/data3/zhongzhw/Ascend8.5REL/cann-8.5.0"
+common:ascend --action_env ASCEND_TOOLKIT_HOME=/data3/zhongzhw/Ascend8.5REL/cann-8.5.0
 common:ascend --define=using_ascend=true
 common:ascend --linkopt=-L/data3/zhongzhw/Ascend8.5REL/cann-8.5.0/lib64
 common:ascend --linkopt=-Wl,-rpath,/data3/zhongzhw/Ascend8.5REL/cann-8.5.0/lib64

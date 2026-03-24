@@ -105,12 +105,12 @@ def prepare_ascend_plugin_wheel(
 
   # Copy plugin pyproject.toml and setup.py
   copy_files(
-      f"{source_file_prefix}jax_plugins/ascend/plugin_pyproject.toml",
+      f"{source_file_prefix}jax_plugins/ascend/pyproject.toml",
       dst_dir=wheel_sources_path,
       dst_filename="pyproject.toml",
   )
   copy_files(
-      f"{source_file_prefix}jax_plugins/ascend/plugin_setup.py",
+      f"{source_file_prefix}jax_plugins/ascend/setup.py",
       dst_dir=wheel_sources_path,
       dst_filename="setup.py",
   )

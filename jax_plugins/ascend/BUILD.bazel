@@ -39,22 +39,13 @@ cc_binary(
     linkopts = [
         "-Wl,--version-script,$(location :ascend_version_script.lds)",
         "-Wl,--no-undefined",
-        # Ascend CANN toolkit libraries
-        "-L$(ASCEND_TOOLKIT_HOME)/lib64",
-        "-Wl,-rpath,$(ASCEND_TOOLKIT_HOME)/lib64",
-        "-lascendcl",
-        "-lnnopbase",
-        "-lopapi_nn",
-        "-lhccl",
-        "-lhcomm",
     ],
     linkshared = True,
     deps = [
         ":ascend_version_script.lds",
-        "//jaxlib/ascend:ascend_plugin_extension",
         "@xla//xla/pjrt/c:pjrt_c_api_ascend",
-        "@xla//xla/service:ascend_plugin",
-        "@xla//xla/stream_executor:ascend_platform",
+        "@xla//xla/service/ascend:ascend_plugin",
+        "@xla//xla/stream_executor/ascend:ascend_platform",
     ],
 )
 
