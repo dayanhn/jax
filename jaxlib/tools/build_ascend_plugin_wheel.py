@@ -103,22 +103,35 @@ def prepare_ascend_plugin_wheel(
       wheel_sources_map=wheel_sources_map,
   )
 
-  plugin_dir = wheel_sources_path / "jax_plugins" / f"xla_ascend{ascend_version}"
+  # Copy plugin pyproject.toml and setup.py
   copy_files(
+      f"{source_file_prefix}jax_plugins/ascend/plugin_pyproject.toml",
       dst_dir=wheel_sources_path,
-      src_files=[
-          f"{source_file_prefix}jax_plugins/ascend/pyproject.toml",
-          f"{source_file_prefix}jax_plugins/ascend/setup.py",
-      ],
+      dst_filename="pyproject.toml",
+  )
+  copy_files(
+      f"{source_file_prefix}jax_plugins/ascend/plugin_setup.py",
+      dst_dir=wheel_sources_path,
+      dst_filename="setup.py",
   )
   build_utils.update_setup_with_ascend_version(wheel_sources_path, ascend_version)
   write_setup_cfg(wheel_sources_path, cpu)
+
+  plugin_dir = wheel_sources_path / "jax_plugins" / f"xla_ascend{ascend_version}"
   copy_files(
       dst_dir=plugin_dir,
       src_files=[
-          f"{source_file_prefix}jax_plugins/ascend/__init__.py",
           f"{source_file_prefix}jaxlib/version.py",
       ],
+  )
+  # Copy Ascend plugin extension modules and shared library
+  copy_files(
+      f"{source_file_prefix}jaxlib/ascend/_versions.so",
+      dst_dir=plugin_dir,
+  )
+  copy_files(
+      f"{source_file_prefix}jaxlib/ascend/ascend_plugin_extension.so",
+      dst_dir=plugin_dir,
   )
   copy_files(
       f"{source_file_prefix}jax_plugins/ascend/pjrt_c_api_ascend_plugin.so",

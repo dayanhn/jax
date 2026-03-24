@@ -49,6 +49,9 @@ cc_library(
     features = ["-use_header_modules"],
     deps = [
         "@com_google_absl//absl/base:dynamic_annotations",
+        "@com_google_absl//absl/status",
+        "@com_google_absl//absl/status:statusor",
+        "@com_google_absl//absl/strings",
     ],
 )
 
@@ -90,13 +93,21 @@ nanobind_extension(
     ],
 )
 
+py_library(
+    name = "ascend_support",
+    deps = [
+        ":_versions",
+        ":ascend_plugin_extension",
+    ],
+)
+
 # We cannot nest select and if_ascend_is_configured so we introduce
 # a standalone py_library target.
 py_library(
     name = "gpu_only_test_deps",
     # `if_ascend_is_configured` will default to `[]`.
     deps = if_ascend_is_configured([
-        ":ascend_gpu_support",
+        ":ascend_support",
         ":ascend_plugin_extension",
     ]),
 )

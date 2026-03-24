@@ -234,7 +234,7 @@ wheel_sources(
         "//jaxlib/rocm:rocm_gpu_support",
         "//jaxlib/rocm:rocm_plugin_extension",
     ]) + if_ascend_is_configured([
-        "//jaxlib/ascend:ascend_gpu_support",
+        "//jaxlib/ascend:ascend_support",
         "//jaxlib/ascend:ascend_plugin_extension",
     ]),
     py_srcs = [":version"] + if_cuda([
@@ -243,7 +243,7 @@ wheel_sources(
     ]) + if_rocm([
         "//jaxlib/rocm:rocm_gpu_support",
     ]) + if_ascend_is_configured([
-        "//jaxlib/ascend:ascend_gpu_support",
+        "//jaxlib/ascend:ascend_support",
     ]),
     static_srcs = [
         "LICENSE.txt",
@@ -349,7 +349,7 @@ wheel_sources(
         "//jaxlib/rocm:rocm_gpu_support",
     ]) + if_ascend_is_configured([
         "//jax_plugins/ascend:ascend_plugin",
-        "//jaxlib/ascend:ascend_gpu_support",
+        "//jaxlib/ascend:ascend_support",
     ]),
     py_srcs = [
         ":version",
@@ -358,7 +358,7 @@ wheel_sources(
     ]) + if_rocm([
         "//jaxlib/rocm:rocm_gpu_support",
     ]) + if_ascend_is_configured([
-        "//jaxlib/ascend:ascend_gpu_support",
+        "//jaxlib/ascend:ascend_support",
     ]),
     static_srcs = [
         "LICENSE.txt",

@@ -173,6 +173,13 @@ load(
 cuda_configure(name = "local_config_cuda")
 
 load(
+    "//jaxlib/ascend:ascend_configure.bzl",
+    "ascend_configure",
+)
+
+ascend_configure(name = "local_config_ascend")
+
+load(
     "@rules_ml_toolchain//gpu/nccl:nccl_redist_init_repository.bzl",
     "nccl_redist_init_repository",
 )

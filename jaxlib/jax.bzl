@@ -48,6 +48,7 @@ tf_cuda_tests_tags = _tf_cuda_tests_tags
 def if_ascend_is_configured(x):
   """Returns `x` if Ascend is configured, otherwise returns an empty list."""
   return select({
+      "@local_config_ascend//ascend:enable_ascend": x,
       "//conditions:default": [],
   })
 
