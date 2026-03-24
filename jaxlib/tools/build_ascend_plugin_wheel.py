@@ -114,17 +114,22 @@ def prepare_ascend_plugin_wheel(
       dst_dir=wheel_sources_path,
       dst_filename="setup.py",
   )
+  # Copy LICENSE.txt
+  copy_files(
+      f"{source_file_prefix}jaxlib/tools/LICENSE.txt",
+      dst_dir=wheel_sources_path,
+  )
   build_utils.update_setup_with_ascend_version(wheel_sources_path, ascend_version)
   write_setup_cfg(wheel_sources_path, cpu)
 
-  plugin_dir = wheel_sources_path / "jax_plugins" / f"xla_ascend{ascend_version}"
+  plugin_dir = wheel_sources_path / f"jax_ascend{ascend_version}_plugin"
   copy_files(
       dst_dir=plugin_dir,
       src_files=[
           f"{source_file_prefix}jaxlib/version.py",
       ],
   )
-  # Copy Ascend plugin extension modules and shared library
+  # Copy Ascend plugin extension modules
   copy_files(
       f"{source_file_prefix}jaxlib/ascend/_versions.so",
       dst_dir=plugin_dir,
@@ -133,11 +138,14 @@ def prepare_ascend_plugin_wheel(
       f"{source_file_prefix}jaxlib/ascend/ascend_plugin_extension.so",
       dst_dir=plugin_dir,
   )
-  copy_files(
-      f"{source_file_prefix}jax_plugins/ascend/pjrt_c_api_ascend_plugin.so",
-      dst_dir=plugin_dir,
-      dst_filename="xla_ascend_plugin.so",
-  )
+  # Only copy PJRT C API plugin if it's available
+  pjrt_plugin_path = f"{source_file_prefix}jax_plugins/ascend/pjrt_c_api_ascend_plugin.so"
+  if pjrt_plugin_path in wheel_sources_map:
+      copy_files(
+          pjrt_plugin_path,
+          dst_dir=plugin_dir,
+          dst_filename="xla_ascend_plugin.so",
+      )
 
 
 tmpdir = None
