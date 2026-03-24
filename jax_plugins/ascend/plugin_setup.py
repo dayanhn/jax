@@ -54,7 +54,7 @@ setup(
     author_email="jax-dev@google.com",
     packages=[package_name],
     python_requires=">=3.11",
-    install_requires=[f"jax-ascend{ascend_version}-pjrt=={__version__}"],
+    # install_requires=[f"jax-ascend{ascend_version}-pjrt>={__version__}"],
     extras_require={
       'with-cann': [
           # Add CANN-specific Python dependencies here if needed

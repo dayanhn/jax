@@ -104,16 +104,34 @@ def prepare_ascend_plugin_wheel(
   )
 
   # Copy plugin pyproject.toml and setup.py
-  copy_files(
-      f"{source_file_prefix}jax_plugins/ascend/pyproject.toml",
-      dst_dir=wheel_sources_path,
-      dst_filename="pyproject.toml",
-  )
-  copy_files(
-      f"{source_file_prefix}jax_plugins/ascend/setup.py",
-      dst_dir=wheel_sources_path,
-      dst_filename="setup.py",
-  )
+  # Try plugin-specific files first (for plugin wheel), fallback to generic names (for PJRT wheel)
+  pyproject_toml = f"{source_file_prefix}jax_plugins/ascend/plugin_pyproject.toml"
+  setup_py = f"{source_file_prefix}jax_plugins/ascend/plugin_setup.py"
+  
+  # Check if plugin-specific files exist in wheel_sources_map
+  if pyproject_toml in wheel_sources_map:
+    copy_files(
+        pyproject_toml,
+        dst_dir=wheel_sources_path,
+        dst_filename="pyproject.toml",
+    )
+    copy_files(
+        setup_py,
+        dst_dir=wheel_sources_path,
+        dst_filename="setup.py",
+    )
+  else:
+    # Fallback to generic files for PJRT wheel
+    copy_files(
+        f"{source_file_prefix}jax_plugins/ascend/pyproject.toml",
+        dst_dir=wheel_sources_path,
+        dst_filename="pyproject.toml",
+    )
+    copy_files(
+        f"{source_file_prefix}jax_plugins/ascend/setup.py",
+        dst_dir=wheel_sources_path,
+        dst_filename="setup.py",
+    )
   # Copy LICENSE.txt
   copy_files(
       f"{source_file_prefix}jaxlib/tools/LICENSE.txt",

@@ -1,5 +1,6 @@
 #!/bin/bash
 
+clear
 # 需要激活环境
 echo "Activating conda environment..."
 source ~/miniconda3/etc/profile.d/conda.sh
@@ -17,7 +18,7 @@ echo "Current directory: $(pwd)"
 # 编译
 echo "Building jax-ascend-pjrt..."
 python build/build.py build \
-  --wheels=jax-ascend-pjrt \
+  --wheels=jaxlib,jax-ascend-plugin,jax-ascend-pjrt \
   --editable \
   --bazel_options=--compilation_mode=dbg \
   --bazel_options=--copt=-g \
