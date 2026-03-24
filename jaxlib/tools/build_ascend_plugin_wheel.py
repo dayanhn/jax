@@ -109,7 +109,8 @@ def prepare_ascend_plugin_wheel(
   setup_py = f"{source_file_prefix}jax_plugins/ascend/plugin_setup.py"
   
   # Check if plugin-specific files exist in wheel_sources_map
-  if pyproject_toml in wheel_sources_map:
+  is_plugin_wheel = pyproject_toml in wheel_sources_map
+  if is_plugin_wheel:
     copy_files(
         pyproject_toml,
         dst_dir=wheel_sources_path,
@@ -132,6 +133,7 @@ def prepare_ascend_plugin_wheel(
         dst_dir=wheel_sources_path,
         dst_filename="setup.py",
     )
+  
   # Copy LICENSE.txt
   copy_files(
       f"{source_file_prefix}jaxlib/tools/LICENSE.txt",
@@ -140,12 +142,21 @@ def prepare_ascend_plugin_wheel(
   build_utils.update_setup_with_ascend_version(wheel_sources_path, ascend_version)
   write_setup_cfg(wheel_sources_path, cpu)
 
-  plugin_dir = wheel_sources_path / f"jax_ascend{ascend_version}_plugin"
+  # Determine the correct package directory based on wheel type
+  if is_plugin_wheel:
+    # For plugin wheel, use jax_ascend{version}_plugin
+    plugin_dir = wheel_sources_path / f"jax_ascend{ascend_version}_plugin"
+  else:
+    # For PJRT wheel, use jax_plugins.xla_ascend{version}
+    plugin_dir = wheel_sources_path / f"jax_plugins" / f"xla_ascend{ascend_version}"
+    # Create parent directory
+    plugin_dir.parent.mkdir(exist_ok=True)
+  
+  # Copy __init__.py for plugin package registration
   copy_files(
+      f"{source_file_prefix}jax_plugins/ascend/__init__.py",
       dst_dir=plugin_dir,
-      src_files=[
-          f"{source_file_prefix}jaxlib/version.py",
-      ],
+      dst_filename="__init__.py",
   )
   # Copy Ascend plugin extension modules
   copy_files(

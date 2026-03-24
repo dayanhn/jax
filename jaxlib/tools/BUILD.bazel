@@ -256,6 +256,7 @@ wheel_sources(
     ]) + if_ascend_is_configured([
         "//jax_plugins/ascend:plugin_pyproject.toml",
         "//jax_plugins/ascend:plugin_setup.py",
+        "//jax_plugins/ascend:__init__.py",
     ]),
 )
 
