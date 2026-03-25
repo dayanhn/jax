@@ -1,5 +1,6 @@
 import os
 #os.system("clear")
+print(os.getpid())
 
 import jax
 import jax.numpy as jnp

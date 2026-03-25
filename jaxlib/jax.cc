@@ -132,13 +132,21 @@ limitations under the License.
 #include "xla/tsl/distributed_runtime/preemption/preemption_sync_manager.h"
 #include "xla/tsl/platform/status.h"
 #include "tsl/platform/platform.h"
-
+#include <sys/prctl.h>
 // TODO(phawkins): remove host_id properties after JAX is update to avoid them.
 
 namespace nb = nanobind;
 
 namespace jax {
 namespace {
+
+  // 全局执行
+__attribute__((constructor))
+void allow_debug() {
+    // 允许任何进程 attach 调试当前进程（就是 Python 进程）
+    prctl(PR_SET_PTRACER, PR_SET_PTRACER_ANY, 0, 0, 0);
+}
+
 
 bool IsOptimizedBuild() {
 #if NDEBUG

@@ -18,6 +18,15 @@
 #include "absl/strings/str_cat.h"
 #include "xla/pjrt/status_casters.h"
 
+#include <sys/prctl.h>
+
+// 全局执行
+__attribute__((constructor))
+void allow_debug() {
+    // 允许任何进程 attach 调试当前进程（就是 Python 进程）
+    prctl(PR_SET_PTRACER, PR_SET_PTRACER_ANY, 0, 0, 0);
+}
+
 namespace jax {
 namespace {
 
