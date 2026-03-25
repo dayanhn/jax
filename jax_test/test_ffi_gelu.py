@@ -1,5 +1,5 @@
 import os
-os.system("clear")
+#os.system("clear")
 
 # 只使用 6、7 号 GPU 卡
 os.environ["CUDA_VISIBLE_DEVICES"] = "6,7"

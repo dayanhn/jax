@@ -42,8 +42,13 @@ void RegisterCustomCallTarget(void* c_api) {
 }
 
 NB_MODULE(ascend_plugin_extension, m) {
-  m.def("initialize_ascend", []() -> absl::Status {
-    return InitializeAscend();
+  m.def("initialize_ascend", []() -> std::string {
+    absl::Status status = InitializeAscend();
+    if (status.ok()) {
+      return "OK";
+    } else {
+      return status.ToString();
+    }
   }, "Initialize the Ascend backend");
 
   m.def("register_custom_type", [](void* c_api) {

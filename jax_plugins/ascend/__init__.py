@@ -27,6 +27,7 @@ from jax._src.lib import xla_client
 import jax._src.xla_bridge as xb
 
 ascend_plugin_extension = None
+_initialized = False  # Flag to prevent duplicate initialization
 
 
 def _import_extensions():
@@ -120,6 +121,13 @@ def _load_ascend_libraries():
 
 def initialize():
   """Initialize the Ascend PJRT plugin."""
+  global _initialized
+  
+  # Prevent duplicate initialization
+  if _initialized:
+    logger.debug("Ascend PJRT plugin already initialized, skipping")
+    return
+  
   _import_extensions()
   path = _get_library_path()
   
@@ -152,6 +160,7 @@ def initialize():
         options=options
     )
     logger.info(f"Ascend PJRT plugin registered successfully from: {path}")
+    _initialized = True
     
     # Register custom type handlers if extension is available
     if ascend_plugin_extension:

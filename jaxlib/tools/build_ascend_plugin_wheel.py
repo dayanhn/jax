@@ -152,21 +152,26 @@ def prepare_ascend_plugin_wheel(
     # Create parent directory
     plugin_dir.parent.mkdir(exist_ok=True)
   
-  # Copy __init__.py for plugin package registration
-  copy_files(
-      f"{source_file_prefix}jax_plugins/ascend/__init__.py",
-      dst_dir=plugin_dir,
-      dst_filename="__init__.py",
-  )
-  # Copy Ascend plugin extension modules
-  copy_files(
-      f"{source_file_prefix}jaxlib/ascend/_versions.so",
-      dst_dir=plugin_dir,
-  )
-  copy_files(
-      f"{source_file_prefix}jaxlib/ascend/ascend_plugin_extension.so",
-      dst_dir=plugin_dir,
-  )
+  if is_plugin_wheel:
+    # For plugin wheel, copy plugin extension modules
+    copy_files(
+        f"{source_file_prefix}jaxlib/ascend/_versions.so",
+        dst_dir=plugin_dir,
+    )
+    copy_files(
+        f"{source_file_prefix}jaxlib/ascend/ascend_plugin_extension.so",
+        dst_dir=plugin_dir,
+    )
+  else:
+    # For PJRT wheel, copy __init__.py for plugin package registration
+    copy_files(
+        f"{source_file_prefix}jax_plugins/ascend/__init__.py",
+        dst_dir=plugin_dir,
+        dst_filename="__init__.py",
+    )
+    # For PJRT wheel, only copy PJRT C API plugin
+    pass
+  
   # Only copy PJRT C API plugin if it's available
   pjrt_plugin_path = f"{source_file_prefix}jax_plugins/ascend/pjrt_c_api_ascend_plugin.so"
   if pjrt_plugin_path in wheel_sources_map:
