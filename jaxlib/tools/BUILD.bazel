@@ -257,6 +257,7 @@ wheel_sources(
         "//jax_plugins/ascend:plugin_pyproject.toml",
         "//jax_plugins/ascend:plugin_setup.py",
         "//jax_plugins/ascend:__init__.py",
+        "//jax_plugins/ascend:ffi_ops.py",
     ]),
 )
 
@@ -375,6 +376,7 @@ wheel_sources(
         "//jax_plugins/ascend:pyproject.toml",
         "//jax_plugins/ascend:setup.py",
         "//jax_plugins/ascend:__init__.py",
+        "//jax_plugins/ascend:ffi_ops.py",
     ]),
 )
 

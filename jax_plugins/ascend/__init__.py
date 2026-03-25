@@ -26,6 +26,9 @@ from typing import Any
 from jax._src.lib import xla_client
 import jax._src.xla_bridge as xb
 
+# Import FFI operators
+from .ffi_ops import gelu, matmul
+
 ascend_plugin_extension = None
 _initialized = False  # Flag to prevent duplicate initialization
 
@@ -196,3 +199,10 @@ try:
   initialize()
 except Exception as e:
   logger.warning(f"Ascend plugin initialization failed: {e}")
+
+
+__all__ = [
+    "gelu",
+    "matmul",
+]
+

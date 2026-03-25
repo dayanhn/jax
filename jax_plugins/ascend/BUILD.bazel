@@ -27,6 +27,7 @@ package(
 
 exports_files([
     "__init__.py",
+    "ffi_ops.py",
     "plugin_pyproject.toml",
     "plugin_setup.py",
     "pyproject.toml",
@@ -53,6 +54,7 @@ py_library_providing_imports_info(
     name = "ascend_plugin",
     srcs = [
         "__init__.py",
+        "ffi_ops.py",
     ],
     data = [":pjrt_c_api_ascend_plugin.so"],
     lib_rule = pytype_library,
