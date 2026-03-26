@@ -677,14 +677,30 @@ async def main():
     wheel_build_command_base.append("--config=ascend")
     if clang_local:
       wheel_build_command_base.append(f"--action_env=CLANG_COMPILER_PATH=\"{clang_path}\"")
+    
+    # 获取 Ascend toolkit 路径
+    ascend_toolkit_home = ""
     if args.ascend_path:
       logging.debug("Ascend toolkit path: %s", args.ascend_path)
+      ascend_toolkit_home = args.ascend_path
       wheel_build_command_base.append(f"--action_env=ASCEND_PATH=\"{args.ascend_path}\"")
       wheel_build_command_base.append(f"--action_env=ASCEND_TOOLKIT_HOME=\"{args.ascend_path}\"")
     else:
       # Use ASCEND_TOOLKIT_HOME from environment if not specified
       if "ASCEND_TOOLKIT_HOME" in os.environ:
-        wheel_build_command_base.append(f"--action_env=ASCEND_TOOLKIT_HOME=\"{os.environ['ASCEND_TOOLKIT_HOME']}\"")
+        ascend_toolkit_home = os.environ['ASCEND_TOOLKIT_HOME']
+        wheel_build_command_base.append(f"--action_env=ASCEND_TOOLKIT_HOME=\"{ascend_toolkit_home}\"")
+    
+    # 直接添加完整的链接路径，不依赖 .bazelrc 中的变量展开
+    if ascend_toolkit_home:
+      logging.debug("Adding Ascend library path: %s", ascend_toolkit_home)
+      wheel_build_command_base.append(f"--linkopt=-L{ascend_toolkit_home}/lib64")
+      wheel_build_command_base.append(f"--linkopt=-Wl,-rpath,{ascend_toolkit_home}/lib64")
+      wheel_build_command_base.append("--linkopt=-lascendcl")
+      wheel_build_command_base.append("--linkopt=-lnnopbase")
+      wheel_build_command_base.append("--linkopt=-lopapi_nn")
+      wheel_build_command_base.append("--linkopt=-lhccl")
+      wheel_build_command_base.append("--linkopt=-lhcomm")
 
   # Append additional build options at the end to override any options set in
   # .bazelrc or above.
