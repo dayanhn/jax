@@ -29,7 +29,8 @@ def gelu(x):
   """
   assert x.dtype in [jnp.float32, jnp.float16, jnp.bfloat16]
   out_type = ShapeDtypeStruct(x.shape, x.dtype)
-  return jax.ffi.ffi_call("ascend.gelu", (out_type,))(x)
+  result, = jax.ffi.ffi_call("ascend.gelu", (out_type,))(x)
+  return result
 
 
 def matmul(a, b):
@@ -50,4 +51,5 @@ def matmul(a, b):
   # Calculate output shape
   out_shape = a.shape[:-1] + b.shape[1:]
   out_type = ShapeDtypeStruct(out_shape, a.dtype)
-  return jax.ffi.ffi_call("ascend.matmul", (out_type,))(a, b)
+  result, = jax.ffi.ffi_call("ascend.matmul", (out_type,))(a, b)
+  return result

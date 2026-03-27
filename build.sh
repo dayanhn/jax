@@ -15,8 +15,9 @@ echo "Python version: $(python --version)"
 echo "Current directory: $(pwd)"
 
 
-# 编译
-echo "Building jax-ascend-pjrt..."
+# 编译 - ASCEND_TOOLKIT_HOME 已通过 source set_env.sh 设置
+# build.py 会自动检测环境变量并注入 --action_env=ASCEND_TOOLKIT_HOME
+
 python build/build.py build \
   --wheels=jaxlib,jax-ascend-plugin,jax-ascend-pjrt \
   --editable \
@@ -25,6 +26,6 @@ python build/build.py build \
   --bazel_options=--copt=-O0 \
   --bazel_options=--strip=never \
   --bazel_options=--override_repository=xla=$(pwd)/xla \
-  --local_xla_path=$(pwd)/xla 
+  --local_xla_path=$(pwd)/xla
 
 echo "Build completed!"
