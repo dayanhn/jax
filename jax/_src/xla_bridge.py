@@ -86,6 +86,11 @@ _ROCM_VISIBLE_DEVICES = config.string_flag(
     help=(
       'Restricts the set of ROCM devices that JAX will use. Either "all", or a '
       'comma-separate list of integer device IDs.'))
+ASCEND_VISIBLE_DEVICES = config.string_flag(
+    'jax_ascend_visible_devices', 'all',
+    help=(
+      'Restricts the set of Ascend devices that JAX will use. Either "all", or a '
+      'comma-separate list of integer device IDs.'))
 
 MOCK_NUM_GPU_PROCESSES = config.int_flag(
     name="mock_num_gpu_processes",
@@ -514,6 +519,11 @@ def _options_from_jax_configs(plugin_name):
       options['num_nodes'] = mock_num_processes
       if mock_gpu_topology:
         options['mock_gpu_topology'] = mock_gpu_topology
+  
+  if plugin_name == "ascend":
+    visible_devices = ASCEND_VISIBLE_DEVICES.value
+    if visible_devices != 'all':
+      options['visible_devices'] = [int(x) for x in visible_devices.split(',')]
 
   return options
 

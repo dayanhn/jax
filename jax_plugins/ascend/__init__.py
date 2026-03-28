@@ -122,8 +122,13 @@ def _load_ascend_libraries():
     )
 
 
-def initialize():
-  """Initialize the Ascend PJRT plugin."""
+def initialize(options=None):
+  """Initialize the Ascend PJRT plugin.
+  
+  Args:
+    options: Optional dictionary of plugin options. If not provided,
+             options will be read from environment variables.
+  """
   global _initialized
   
   # Prevent duplicate initialization
@@ -142,8 +147,21 @@ def initialize():
   _load_ascend_libraries()
 
   try:
-    # Generate plugin options from environment
-    options = {}
+    # Generate plugin options from environment or use provided options
+    if options is None:
+      options = {}
+    
+    # Read options from environment variables (similar to CUDA plugin)
+    # Use lowercase 'visible_devices' key to match _options_from_jax_configs
+    if 'visible_devices' not in options:
+      visible_devices = os.getenv('ASCEND_VISIBLE_DEVICES')
+      if visible_devices is not None and visible_devices != 'all':
+        options['visible_devices'] = [int(x) for x in visible_devices.split(',')]
+    
+    if 'ASCEND_DEVICE_COUNT' not in options:
+      device_count = os.getenv('JAX_ASCEND_DEVICE_COUNT')
+      if device_count is not None:
+        options['ASCEND_DEVICE_COUNT'] = device_count
     
     # Check if we should skip initialization
     if not os.getenv("JAX_SKIP_ASCEND_INIT", False):
