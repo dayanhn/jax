@@ -34,6 +34,16 @@ jax.ffi.register_ffi_target("foo-fwd", jax.ffi.pycapsule(library.FooFwd),
 jax.ffi.register_ffi_target("foo-bwd", jax.ffi.pycapsule(library.FooBwd),
                             platform="CUDA")
 
+jax.ffi.register_ffi_target("my-gelu", jax.ffi.pycapsule(library.MyGelu),
+                            platform="CUDA")
+
+
+def gelu_fwd(x):
+  assert x.dtype == jnp.float32
+  out_type = jax.ShapeDtypeStruct(x.shape, x.dtype)
+  result, = jax.ffi.ffi_call("my-gelu", (out_type,))(x)
+  return result
+
 
 def foo_fwd(a, b):
   assert a.dtype == jnp.float32
@@ -65,3 +75,24 @@ def foo(a, b):
 
 
 foo.defvjp(foo_fwd, foo_bwd)
+
+jax.ffi.register_ffi_target("matmul", jax.ffi.pycapsule(library.MatMul),
+                            platform="CUDA")
+
+
+def matmul_fwd(A, B):
+  """Matrix multiplication: C = A @ B where A is [m, k], B is [k, n], C is [m, n]
+  
+  Dimensions are automatically inferred from the input buffers.
+  """
+  assert A.dtype == jnp.float32
+  assert B.dtype == jnp.float32
+  
+  # Extract dimensions from input shapes
+  m, k = A.shape
+  k2, n = B.shape
+  assert k == k2, f"Matrix dimension mismatch: A.shape={A.shape}, B.shape={B.shape}"
+  
+  out_type = jax.ShapeDtypeStruct((m, n), A.dtype)
+  result, = jax.ffi.ffi_call("matmul", (out_type,))(A, B)
+  return result

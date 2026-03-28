@@ -16,6 +16,7 @@ MODULE.bazel.lock
 .mypy_cache/
 .pytype/
 /docs/build
+examples/ffi/build
 *_pb2.py
 /docs/notebooks/.ipynb_checkpoints/
 /docs/_autosummary

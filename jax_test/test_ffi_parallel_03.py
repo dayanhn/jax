@@ -1,5 +1,6 @@
 import os
 # 必须在导入 jax 之前设置环境变量！
+os.environ["CUDA_VISIBLE_DEVICES"] = "6,7"
 os.environ["ASCEND_VISIBLE_DEVICES"] = "6,7"
 os.system("clear")
 print("pid = ", os.getpid())
@@ -7,8 +8,18 @@ print("pid = ", os.getpid())
 import jax
 import jax.numpy as jnp
 from jax import pmap, jit
-from jax_plugins.xla_ascend910 import matmul
 import numpy as np
+
+# 根据后端类型动态导入 matmul 函数
+backend = jax.default_backend().lower()
+print(f"Using backend: {backend}")
+
+if backend == 'cuda' or backend == 'gpu':
+    from jax_ffi_example.cuda_examples import matmul_fwd as matmul
+elif backend == 'ascend':
+    from jax_plugins.xla_ascend910 import matmul
+else:
+    raise RuntimeError(f"Unsupported backend: {backend}")
 
 n_devices = len(jax.devices())
 print(f"Number of devices: {n_devices}")
@@ -92,3 +103,5 @@ parallel_result = compiled(A_replicated, B_replicated)
 print(f"✓ Execution successful")
 print(f"Parallel result shape: {parallel_result.shape}")
 print(f"Parallel result devices: {parallel_result.devices()}")
+print(f"Device 0 result[:2,:2]:\n{parallel_result[0][:2,:2]}")
+print(f"Device 1 result[:2,:2]:\n{parallel_result[1][:2,:2]}")
