@@ -112,6 +112,7 @@ def _load_ascend_libraries():
         ctypes.cdll.LoadLibrary(os.path.join(library_path, 'libopapi_nn.so'))
         ctypes.cdll.LoadLibrary(os.path.join(library_path, 'libhccl.so'))
         ctypes.cdll.LoadLibrary(os.path.join(library_path, 'libhcomm.so'))
+        ctypes.cdll.LoadLibrary(os.path.join(library_path, 'libopapi_math.so'))
         logger.debug("Loaded libascendcl.so")
       except OSError as e:
         logger.warning(f"Failed to preload libascendcl.so: {e}")

@@ -701,6 +701,7 @@ async def main():
       wheel_build_command_base.append("--linkopt=-lopapi_nn")
       wheel_build_command_base.append("--linkopt=-lhccl")
       wheel_build_command_base.append("--linkopt=-lhcomm")
+      wheel_build_command_base.append("--linkopt=-lopapi_math")
 
   # Append additional build options at the end to override any options set in
   # .bazelrc or above.
