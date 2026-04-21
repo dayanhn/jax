@@ -1,14 +1,28 @@
+
+import os
+os.system('clear')
+print(os.getpid())
+
+os.environ['XLA_FLAGS'] = (
+    '--xla_dump_to=./tmp/xla_dump '
+    '--xla_gpu_force_compilation_parallelism=1 '
+    '--xla_dump_hlo_as_text=true '
+    '--xla_dump_hlo_as_proto=false '
+    '--xla_dump_hlo_pass_re=.* '
+    '--xla_dump_hlo_module_re=.*  '
+    # 自动调优日志配置
+    '--xla_gpu_dump_autotune_logs_to=./tmp/autotune_logs.txt '
+    )
+
 import time
 import argparse
 import jax
 import jax.numpy as jnp
 import numpy as np
 import pickle
-import os
-print(os.getpid())
 
 from data import get_datasets
-from model import init_mlp_params, update, accuracy
+from model import init_mlp_params_numpy, update, accuracy
 
 
 def parse_args():
@@ -25,10 +39,16 @@ def main():
     args = parse_args()
     train_iter_fn, test_iter_fn = get_datasets(batch_size=args.batch_size, 
                                                use_manual_download=args.manual_download)
+    # key = jax.random.PRNGKey(args.seed)
+    # params = init_mlp_params(layer_sizes, key)
 
-    key = jax.random.PRNGKey(args.seed)
+    # 使用 NumPy 初始化参数
     layer_sizes = [784, 512, 256, 10]
-    params = init_mlp_params(layer_sizes, key)
+    params_numpy = init_mlp_params_numpy(layer_sizes, args.seed)
+    
+    # 将参数搬入设备内存
+    device = jax.devices()[0]
+    params = jax.tree_util.tree_map(lambda x: jax.device_put(x, device), params_numpy)
 
     for epoch in range(1, args.epochs + 1):
         t0 = time.time()

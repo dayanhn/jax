@@ -1,5 +1,18 @@
 import jax
 import jax.numpy as jnp
+import numpy as np
+
+
+def init_mlp_params_numpy(layer_sizes, seed):
+    """使用 NumPy 初始化 MLP 参数"""
+    rng = np.random.default_rng(seed)
+    params = []
+    for n_in, n_out in zip(layer_sizes[:-1], layer_sizes[1:]):
+        # He 初始化
+        w = rng.standard_normal((n_in, n_out)) * np.sqrt(2.0 / max(1, n_in))
+        b = np.zeros((n_out,))
+        params.append({'W': w, 'b': b})
+    return params
 
 
 def init_mlp_params(layer_sizes, key):

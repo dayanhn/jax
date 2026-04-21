@@ -2,6 +2,8 @@
 *.so
 *.egg-info
 *.whl
+tmp/
+/jax_test/aclnn_test/build
 /build/lib
 /build/bazel*
 /build/__editable__.jax-*

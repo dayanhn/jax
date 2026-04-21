@@ -1,5 +1,6 @@
 #!/bin/bash
-
+export TMPDIR=~/tmp
+mkdir -p $TMPDIR
 clear
 # 需要激活环境
 echo "Activating conda environment..."
