@@ -4,6 +4,7 @@
 *.whl
 tmp/
 /jax_test/aclnn_test/build
+/jax_test/cifar10/datasets/
 /build/lib
 /build/bazel*
 /build/__editable__.jax-*

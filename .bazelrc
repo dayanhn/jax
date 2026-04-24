@@ -8,8 +8,8 @@ common:bzlmod --enable_bzlmod --noenable_workspace
 common:bzlmod --check_direct_dependencies=error
 
 # Proxy settings for network access
-common --action_env=http_proxy=http://120.77.201.177:7897
-common --action_env=https_proxy=http://120.77.201.177:7897
+#common --action_env=http_proxy=http://120.77.201.177:7897
+#common --action_env=https_proxy=http://120.77.201.177:7897
 #common --action_env=HTTP_PROXY=http://120.77.201.177:7897
 #common --action_env=HTTPS_PROXY=http://120.77.201.177:7897
 #common --action_env=ALL_PROXY=http://120.77.201.177:7897
