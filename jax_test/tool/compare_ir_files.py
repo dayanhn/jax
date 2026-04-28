@@ -22,7 +22,7 @@ def compare_ir_files(dump_dir):
         return
     
     # 收集符合条件的文件
-    pattern = r"module_0005\.jit_update\.(\d{4})\..*\.txt"
+    pattern = r"module_0003.jit_forward_and_backward\.(\d{4})\..*\.txt"
     files = []
     
     for file in dump_path.iterdir():
@@ -73,5 +73,5 @@ def compare_ir_files(dump_dir):
 
 if __name__ == "__main__":
     os.system("clear")
-    dump_dir = "/data3/zhongzhw/code/google/jax/tmp/xla_dump"
+    dump_dir = "/data3/zhongzhw/code/google/jax/jax_test/tmp/xla_dump"
     compare_ir_files(dump_dir)

@@ -3,6 +3,13 @@ import os
 os.system('clear')
 print(os.getpid())
 
+dump_out = True
+
+if dump_out:
+    os.environ["TF_CPP_MIN_LOG_LEVEL"] = "4"
+    os.environ["TF_CPP_MAX_VLOG_LEVEL"] = "4"
+    # os.environ["TF_CPP_VMODULE"] = ("hlo_pass_pipeline=4,thunk_emitter=4,compile_module_to_llvm_ir=4")
+
 os.environ['XLA_FLAGS'] = (
     '--xla_dump_to=./tmp/xla_dump '
     '--xla_gpu_force_compilation_parallelism=1 '
@@ -12,6 +19,7 @@ os.environ['XLA_FLAGS'] = (
     '--xla_dump_hlo_module_re=.*  '
     # 自动调优日志配置
     '--xla_gpu_dump_autotune_logs_to=./tmp/autotune_logs.txt '
+    #'--xla_disable_hlo_passes=aclnn-gemm-rewriter'  # 禁用 ACLNN GEMM rewriter
     )
 
 import time
@@ -22,7 +30,7 @@ import numpy as np
 import pickle
 
 from data import get_datasets
-from model import init_mlp_params_numpy, update, accuracy
+from model import init_mlp_params_numpy, update, accuracy, predict, loss_fn
 
 
 def parse_args():
@@ -49,6 +57,34 @@ def main():
     # 将参数搬入设备内存
     device = jax.devices()[0]
     params = jax.tree_util.tree_map(lambda x: jax.device_put(x, device), params_numpy)
+
+    # 调试代码:使用全1输入测试每个函数的输出
+
+    batch_size = 2
+    input_dim = layer_sizes[0]  # 784
+    num_classes = layer_sizes[-1]  # 10
+    
+    x_ones = jax.device_put(jnp.ones((batch_size, input_dim), dtype=jnp.float32), device)
+    y_ones = jax.device_put(jnp.ones(batch_size, dtype=jnp.int32), device)
+    
+    
+    # 1. 测试 predict 函数
+    #logits = predict(params, x_ones)
+    #jax.block_until_ready(logits)
+    
+    # 2. 测试 loss_fn 函数
+    #loss = loss_fn(params, x_ones, y_ones)
+    #jax.block_until_ready(loss)
+    
+    # 3. 测试 accuracy 函数
+    #acc = accuracy(params, x_ones, y_ones)
+    #jax.block_until_ready(acc)
+
+    # 4. 测试 update 函数
+    #lr = 0.01
+    #new_params = update(params, x_ones, y_ones, lr)
+    #jax.block_until_ready(new_params)
+    
 
     for epoch in range(1, args.epochs + 1):
         t0 = time.time()

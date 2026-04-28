@@ -25,10 +25,10 @@ if dump_out:
 
 # Move XLA_FLAGS here so they take effect before importing JAX/C++ backends.
 # --xla_gpu_force_compilation_parallelism=1 禁用多线程编译，方便调试
-'''
+# '''
 os.environ['XLA_FLAGS'] = (
     '--xla_gpu_experimental_enable_triton_heroless_priority_fusion=true '
-    '--xla_dump_to=./tmp/xla_dump '
+    '--xla_dump_to=./tmp/xla_dump/test_fusion '
     '--xla_gpu_force_compilation_parallelism=1 '
     '--xla_dump_hlo_as_text=true '
     '--xla_dump_hlo_as_proto=false '
@@ -37,7 +37,7 @@ os.environ['XLA_FLAGS'] = (
     # 自动调优日志配置
     '--xla_gpu_dump_autotune_logs_to=./tmp/autotune_logs.txt '
     )
-'''
+#'''
 
 print("pid = ",os.getpid())
 
@@ -51,7 +51,6 @@ print(f"JAX version: {jax.__version__}")
 print(f"JAX devices: {jax.devices()}")
 
 x = jnp.ones((32, 32,32))
-print(f"JAX 实际值:   {x[0, ]:.10f}")
 
 # 示例 2: 矩阵操作与 element-wise 操作的组合（适合 Triton 处理）
 @jit

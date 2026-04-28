@@ -24,7 +24,7 @@ def init_mlp_params(layer_sizes, key):
         params.append({'W': w, 'b': b})
     return params
 
-
+@jax.jit
 def predict(params, x):
     h = x
     for layer in params[:-1]:
@@ -33,14 +33,14 @@ def predict(params, x):
     logits = jnp.dot(h, params[-1]['W']) + params[-1]['b']
     return logits
 
-
+@jax.jit
 def loss_fn(params, x, y):
     logits = predict(params, x)
     one_hot = jax.nn.one_hot(y, logits.shape[-1])
     loss = -jnp.mean(jnp.sum(jax.nn.log_softmax(logits) * one_hot, axis=-1))
     return loss
 
-
+@jax.jit
 def accuracy(params, x, y):
     logits = predict(params, x)
     preds = jnp.argmax(logits, axis=-1)

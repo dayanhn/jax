@@ -1,14 +1,20 @@
 import os
 os.system('clear')
 print(os.getpid())
-os.environ["ASCEND_VISIBLE_DEVICES"] = "7"
+
 dump_out = True
 
 if dump_out:
+    # Ensure C++/Abseil logging flags are set before any C++ extensions are loaded.
+    # Use TF_CPP_* env vars which logging_initializer.cc reads and applies.
+    # Increase max vlog so XLA_VLOG_LINES(3, ...) will print
     os.environ["TF_CPP_MIN_LOG_LEVEL"] = "4"
     os.environ["TF_CPP_MAX_VLOG_LEVEL"] = "4"
 
-    #os.environ["TF_CPP_VMODULE"] = ("thunk_emitter=4,compile_module_to_llvm_ir=4")
+
+    # Enable verbose logging for HLO-related sources and MLIR conversion passes.
+    # Use basenames (file without extension), e.g. hlo_module for hlo_module.cc.
+    os.environ["TF_CPP_VMODULE"] = ("hlo_pass_pipeline=4,thunk_emitter=4,compile_module_to_llvm_ir=4")
 
 import time
 import argparse
@@ -72,12 +78,12 @@ def get_cifar10_datasets(batch_size=128, data_dir='./datasets'):
     train_images = []
     train_labels = []
     
-    for i in range(1, 6):
-        batch_file = os.path.join(extract_dir, f"data_batch_{i}")
-        with open(batch_file, 'rb') as f:
-            batch = pickle.load(f, encoding='bytes')
-        train_images.extend(batch[b'data'])
-        train_labels.extend(batch[b'labels'])
+    # 只加载一个批次的数据，加快调试
+    batch_file = os.path.join(extract_dir, "data_batch_1")
+    with open(batch_file, 'rb') as f:
+        batch = pickle.load(f, encoding='bytes')
+    train_images.extend(batch[b'data'])
+    train_labels.extend(batch[b'labels'])
     
     train_images = np.array(train_images, dtype=np.float32) / 255.0
     train_images = train_images.reshape(-1, 3, 32, 32).transpose(0, 2, 3, 1)  # (N, H, W, C)
@@ -91,6 +97,10 @@ def get_cifar10_datasets(batch_size=128, data_dir='./datasets'):
     test_images = np.array(test_batch[b'data'], dtype=np.float32) / 255.0
     test_images = test_images.reshape(-1, 3, 32, 32).transpose(0, 2, 3, 1)  # (N, H, W, C)
     test_labels = np.array(test_batch[b'labels'], dtype=np.int32)
+    
+    # 只使用部分测试数据
+    test_images = test_images[:1000]
+    test_labels = test_labels[:1000]
     
     print(f"Train set: {train_images.shape[0]} samples")
     print(f"Test set: {test_images.shape[0]} samples")
@@ -111,7 +121,7 @@ def get_cifar10_datasets(batch_size=128, data_dir='./datasets'):
     
     return train_iter, test_iter
 
-# ResNet18 模型定义
+# ResNet18 模型定义 (简化为只有一个block)
 def init_resnet18_params_numpy(seed):
     """使用 NumPy 初始化 ResNet18 参数"""
     rng = np.random.default_rng(seed)
@@ -147,99 +157,17 @@ def init_resnet18_params_numpy(seed):
         
         return {'conv1': conv1, 'conv2': conv2, 'shortcut': shortcut}
     
-    # 初始化各层参数
+    # 初始化各层参数 (简化为只有一个block)
     params = {
         'conv1': conv_block(3, 64, 1),  # CIFAR10使用3x3卷积，步长1
         'maxpool': {},
         'layer1': {
-            'block1': residual_block(64, 64, 1),
-            'block2': residual_block(64, 64, 1)
-        },
-        'layer2': {
-            'block1': residual_block(64, 128, 2),
-            'block2': residual_block(128, 128, 1)
-        },
-        'layer3': {
-            'block1': residual_block(128, 256, 2),
-            'block2': residual_block(256, 256, 1)
-        },
-        'layer4': {
-            'block1': residual_block(256, 512, 2),
-            'block2': residual_block(512, 512, 1)
+            'block1': residual_block(64, 64, 1)  # 只保留一个block
         },
         'avgpool': {},
         'fc': {
-            'W': rng.standard_normal((512, 10)) * np.sqrt(2.0 / 512),
+            'W': rng.standard_normal((64, 10)) * np.sqrt(2.0 / 64),  # 输出通道改为64
             'b': np.zeros((10,))
-        }
-    }
-    
-    return params
-
-
-def init_resnet18_params(key):
-    """初始化 ResNet18 参数"""
-    def conv_block(key, in_channels, out_channels, stride=1):
-        """卷积块"""
-        k1, k2 = jax.random.split(key)
-        # 卷积层
-        w1 = jax.random.normal(k1, (3, 3, in_channels, out_channels)) * jnp.sqrt(2.0 / (3*3*in_channels))
-        b1 = jnp.zeros((out_channels,))
-        # 批量归一化参数
-        gamma1 = jnp.ones((out_channels,))
-        beta1 = jnp.zeros((out_channels,))
-        moving_mean1 = jnp.zeros((out_channels,))
-        moving_var1 = jnp.ones((out_channels,))
-        return {
-            'conv': {'W': w1, 'b': b1},
-            'bn': {'gamma': gamma1, 'beta': beta1, 'moving_mean': moving_mean1, 'moving_var': moving_var1}
-        }
-    
-    def residual_block(key, in_channels, out_channels, stride=1):
-        """残差块"""
-        k1, k2, k3 = jax.random.split(key, 3)
-        
-        # 主路径
-        conv1 = conv_block(k1, in_channels, out_channels, stride)
-        conv2 = conv_block(k2, out_channels, out_channels, 1)
-        
-        #  shortcuts路径
-        shortcut = {}
-        if stride != 1 or in_channels != out_channels:
-            # 需要下采样
-            w = jax.random.normal(k3, (1, 1, in_channels, out_channels)) * jnp.sqrt(2.0 / (1*1*in_channels))
-            b = jnp.zeros((out_channels,))
-            shortcut = {'conv': {'W': w, 'b': b}}
-        
-        return {'conv1': conv1, 'conv2': conv2, 'shortcut': shortcut}
-    
-    # 初始化各层参数
-    keys = jax.random.split(key, 10)
-    
-    # 第一层：7x7卷积 + BN + ReLU + 最大池化
-    params = {
-        'conv1': conv_block(keys[0], 3, 64, 1),  # CIFAR10使用3x3卷积，步长1
-        'maxpool': {},
-        'layer1': {
-            'block1': residual_block(keys[1], 64, 64, 1),
-            'block2': residual_block(keys[2], 64, 64, 1)
-        },
-        'layer2': {
-            'block1': residual_block(keys[3], 64, 128, 2),
-            'block2': residual_block(keys[4], 128, 128, 1)
-        },
-        'layer3': {
-            'block1': residual_block(keys[5], 128, 256, 2),
-            'block2': residual_block(keys[6], 256, 256, 1)
-        },
-        'layer4': {
-            'block1': residual_block(keys[7], 256, 512, 2),
-            'block2': residual_block(keys[8], 512, 512, 1)
-        },
-        'avgpool': {},
-        'fc': {
-            'W': jax.random.normal(keys[9], (512, 10)) * jnp.sqrt(2.0 / 512),
-            'b': jnp.zeros((10,))
         }
     }
     
@@ -341,21 +269,8 @@ def predict(params, x, is_training=True):
         x = jax.nn.relu(x)
         return x, block_params
     
-    # Layer 1
+    # 只使用一个block
     x, params['layer1']['block1'] = residual_block_forward(x, params['layer1']['block1'], is_training)
-    x, params['layer1']['block2'] = residual_block_forward(x, params['layer1']['block2'], is_training)
-    
-    # Layer 2
-    x, params['layer2']['block1'] = residual_block_forward(x, params['layer2']['block1'], is_training)
-    x, params['layer2']['block2'] = residual_block_forward(x, params['layer2']['block2'], is_training)
-    
-    # Layer 3
-    x, params['layer3']['block1'] = residual_block_forward(x, params['layer3']['block1'], is_training)
-    x, params['layer3']['block2'] = residual_block_forward(x, params['layer3']['block2'], is_training)
-    
-    # Layer 4
-    x, params['layer4']['block1'] = residual_block_forward(x, params['layer4']['block1'], is_training)
-    x, params['layer4']['block2'] = residual_block_forward(x, params['layer4']['block2'], is_training)
     
     # 全局平均池化
     x = jnp.mean(x, axis=(1, 2))
@@ -437,7 +352,7 @@ def main():
         data_dir=args.data_dir
     )
     
-    # 初始化 ResNet18 参数
+    # 初始化 ResNet18 参数（简化版）
     params_numpy = init_resnet18_params_numpy(args.seed)
     
     # 将参数搬入设备内存
@@ -462,9 +377,9 @@ def main():
             # 应用参数更新（包含优化器状态更新）
             params, opt_state = apply_updates(params, grads, updated_params, opt_state, tx)
             
-            if step % 100 == 0:
+            if step % 10 == 0:  # 增加打印频率
                 acc = float(accuracy(params, xb, yb))
-                print(f'Epoch {epoch}, Step {step}, Batch Acc: {acc:.4f}')
+                print(f'Epoch {epoch}, Step {step}, Batch Acc: {acc:.4f}, Loss: {float(loss):.4f}')
 
         # Evaluation
         test_iter = test_iter_fn()
@@ -488,9 +403,9 @@ def main():
             return params
     
     serializable = serialize_params(params)
-    with open('resnet18_cifar10_params.pkl', 'wb') as f:
+    with open('resnet18_cifar10_single_block_params.pkl', 'wb') as f:
         pickle.dump(serializable, f)
-    print('Saved parameters to resnet18_cifar10_params.pkl')
+    print('Saved parameters to resnet18_cifar10_single_block_params.pkl')
 
 
 if __name__ == '__main__':

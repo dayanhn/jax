@@ -105,9 +105,12 @@ def get_datasets(batch_size=128, use_manual_download=False):
         print(f"Train set: {train_images.shape[0]} samples")
         print(f"Test set: {test_images.shape[0]} samples")
         
+        # 使用固定种子确保训练数据shuffle顺序可重现
+        train_rng = np.random.default_rng(42)
+        
         def train_iter():
             num_samples = len(train_images)
-            indices = np.random.permutation(num_samples)
+            indices = train_rng.permutation(num_samples)
             for start in range(0, num_samples, batch_size):
                 end = min(start + batch_size, num_samples)
                 batch_idx = indices[start:end]
